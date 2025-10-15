@@ -108,9 +108,8 @@ function showQuestion() {
 
 function selectAnswer(button, selected, correctAnswer) {
   const feedback = document.getElementById('feedback');
-
-  // თუ უკვე უპასუხა სწორად, აღარაფერს ვცვლით
-  if (answeredCorrectly) return;
+  
+  if (answeredCorrectly) return; // თუ უკვე იპოვა სწორი, აღარაფერს ვცვლით
 
   if (selected === correctAnswer) {
     button.classList.remove('bg-gray-100', 'bg-red-200');
