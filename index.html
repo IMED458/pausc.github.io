@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>პედიატრიული აუსკულტაციის ვარჯიში</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body {
+  background: linear-gradient(to right, #dfe9f3, #ffffff);
+  font-family: 'Noto Sans Georgian', sans-serif;
+}
+.card {
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.hidden { display: none; }
+</style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+<h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">პედიატრიული აუსკულტაციის ვარჯიში</h1>
+
+<!-- მთავარი ეკრანი -->
+<div id="home" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+  <div onclick="startQuiz('heart')" class="card cursor-pointer bg-pink-100 rounded-2xl shadow p-10 flex flex-col items-center justify-center hover:bg-pink-200">
+    <span class="text-6xl mb-4">🫀</span>
+    <h2 class="text-2xl font-semibold text-gray-700">გულის აუსკულტაცია</h2>
+  </div>
+  <div onclick="startQuiz('lung')" class="card cursor-pointer bg-blue-100 rounded-2xl shadow p-10 flex flex-col items-center justify-center hover:bg-blue-200">
+    <span class="text-6xl mb-4">🫁</span>
+    <h2 class="text-2xl font-semibold text-gray-700">ფილტვის აუსკულტაცია</h2>
+  </div>
+</div>
+
+<!-- ტესტის ეკრანი -->
+<div id="quiz" class="hidden flex flex-col items-center justify-center w-full max-w-3xl bg-white rounded-2xl shadow p-6">
+  <button onclick="goHome()" class="self-start text-blue-500 hover:text-blue-700 mb-4">← უკან</button>
+  <h2 id="questionText" class="text-xl font-semibold mb-4 text-center"></h2>
+  <audio id="audioPlayer" controls class="w-full mb-4"></audio>
+  <div id="choices" class="grid grid-cols-1 gap-3 w-full"></div>
+  <button id="nextBtn" onclick="nextQuestion()" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg disabled:bg-gray-300">შემდეგი</button>
+</div>
+
+<!-- შედეგის ეკრანი -->
+<div id="result" class="hidden flex flex-col items-center justify-center text-center bg-white rounded-2xl shadow p-8 w-full max-w-md">
+  <h2 class="text-2xl font-bold mb-4">შედეგი</h2>
+  <p id="scoreText" class="text-lg mb-4"></p>
+  <button onclick="goHome()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg">თავიდან დაწყება</button>
+</div>
+
+<script>
+let allQuestions = [];
+let currentSection = '';
+let currentIndex = 0;
+let shuffledQuestions = [];
+let score = 0;
+
+async function loadQuestions() {
+  const res = await fetch('questions.json');
+  allQuestions = await res.json();
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startQuiz(section) {
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  currentSection = section;
+  score = 0;
+  const sectionQuestions = allQuestions.filter(q => q.section === section);
+  shuffledQuestions = shuffleArray(sectionQuestions);
+  currentIndex = 0;
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = shuffledQuestions[currentIndex];
+  document.getElementById('questionText').textContent = q.text;
+  const audio = document.getElementById('audioPlayer');
+  audio.src = 'audios/' + q.audio;
+  const choicesDiv = document.getElementById('choices');
+  choicesDiv.innerHTML = '';
+  let shuffledChoices = shuffleArray([...q.choices]);
+  shuffledChoices.forEach((choice) => {
+    const btn = document.createElement('button');
+    btn.textContent = choice;
+    btn.className = 'bg-gray-100 hover:bg-gray-200 w-full text-left py-2 px-3 rounded-lg';
+    btn.onclick = () => selectAnswer(choice, q.correctIndex, q.choices[q.correctIndex]);
+    choicesDiv.appendChild(btn);
+  });
+  document.getElementById('nextBtn').disabled = true;
+}
+
+function selectAnswer(selected, correctIndex, correctAnswer) {
+  const buttons = document.querySelectorAll('#choices button');
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === correctAnswer) {
+      btn.classList.add('bg-green-200');
+    } else if (btn.textContent === selected && btn.textContent !== correctAnswer) {
+      btn.classList.add('bg-red-200');
+    }
+  });
+  if (selected === correctAnswer) score++;
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < shuffledQuestions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('scoreText').textContent = `თქვენი ქულა: ${score} / ${shuffledQuestions.length}`;
+}
+
+function goHome() {
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('home').classList.remove('hidden');
+}
+
+loadQuestions();
+</script>
+
+</body>
+</html>
