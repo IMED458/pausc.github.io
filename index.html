@@ -42,6 +42,7 @@ body {
   <h2 id="questionText" class="text-xl font-semibold mb-4 text-center"></h2>
   <audio id="audioPlayer" controls class="w-full mb-4"></audio>
   <div id="choices" class="grid grid-cols-1 gap-3 w-full"></div>
+  <p id="feedback" class="text-lg font-semibold mt-4"></p>
   <button id="nextBtn" onclick="nextQuestion()" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg disabled:bg-gray-300">შემდეგი</button>
 </div>
 
@@ -89,29 +90,42 @@ function showQuestion() {
   const audio = document.getElementById('audioPlayer');
   audio.src = 'audios/' + q.audio;
   const choicesDiv = document.getElementById('choices');
+  const feedback = document.getElementById('feedback');
+  feedback.textContent = '';
   choicesDiv.innerHTML = '';
   let shuffledChoices = shuffleArray([...q.choices]);
   shuffledChoices.forEach((choice) => {
     const btn = document.createElement('button');
     btn.textContent = choice;
-    btn.className = 'bg-gray-100 hover:bg-gray-200 w-full text-left py-2 px-3 rounded-lg';
-    btn.onclick = () => selectAnswer(choice, q.correctIndex, q.choices[q.correctIndex]);
+    btn.className = 'bg-gray-100 hover:bg-gray-200 w-full text-left py-2 px-3 rounded-lg transition';
+    btn.onclick = () => selectAnswer(btn, choice, q.correctIndex, q.choices[q.correctIndex]);
     choicesDiv.appendChild(btn);
   });
   document.getElementById('nextBtn').disabled = true;
 }
 
-function selectAnswer(selected, correctIndex, correctAnswer) {
+function selectAnswer(button, selected, correctIndex, correctAnswer) {
   const buttons = document.querySelectorAll('#choices button');
-  buttons.forEach(btn => {
-    btn.disabled = true;
-    if (btn.textContent === correctAnswer) {
-      btn.classList.add('bg-green-200');
-    } else if (btn.textContent === selected && btn.textContent !== correctAnswer) {
-      btn.classList.add('bg-red-200');
-    }
-  });
-  if (selected === correctAnswer) score++;
+  buttons.forEach(btn => btn.disabled = true);
+  const feedback = document.getElementById('feedback');
+
+  if (selected === correctAnswer) {
+    button.classList.add('bg-green-200');
+    feedback.textContent = "სწორია ✅";
+    feedback.className = "text-green-600 text-lg font-semibold mt-4";
+    score++;
+  } else {
+    button.classList.add('bg-red-200');
+    feedback.textContent = "არასწორია ❌";
+    feedback.className = "text-red-600 text-lg font-semibold mt-4";
+    // აჩვენოს სწორი პასუხიც
+    buttons.forEach(btn => {
+      if (btn.textContent === correctAnswer) {
+        btn.classList.add('bg-green-200');
+      }
+    });
+  }
+
   document.getElementById('nextBtn').disabled = false;
 }
 
