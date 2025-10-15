@@ -42,8 +42,8 @@ body {
   <h2 id="questionText" class="text-xl font-semibold mb-4 text-center"></h2>
   <audio id="audioPlayer" controls class="w-full mb-4"></audio>
   <div id="choices" class="grid grid-cols-1 gap-3 w-full"></div>
-  <p id="feedback" class="text-lg font-semibold mt-4"></p>
-  <button id="nextBtn" onclick="nextQuestion()" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg disabled:bg-gray-300">შემდეგი</button>
+  <p id="feedback" class="text-lg font-semibold mt-4 h-6"></p>
+  <button id="nextBtn" onclick="nextQuestion()" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg">შემდეგი</button>
 </div>
 
 <!-- შედეგის ეკრანი -->
@@ -59,6 +59,7 @@ let currentSection = '';
 let currentIndex = 0;
 let shuffledQuestions = [];
 let score = 0;
+let answeredCorrectly = false;
 
 async function loadQuestions() {
   const res = await fetch('questions.json');
@@ -85,6 +86,7 @@ function startQuiz(section) {
 }
 
 function showQuestion() {
+  answeredCorrectly = false;
   const q = shuffledQuestions[currentIndex];
   document.getElementById('questionText').textContent = q.text;
   const audio = document.getElementById('audioPlayer');
@@ -93,40 +95,36 @@ function showQuestion() {
   const feedback = document.getElementById('feedback');
   feedback.textContent = '';
   choicesDiv.innerHTML = '';
+
   let shuffledChoices = shuffleArray([...q.choices]);
   shuffledChoices.forEach((choice) => {
     const btn = document.createElement('button');
     btn.textContent = choice;
     btn.className = 'bg-gray-100 hover:bg-gray-200 w-full text-left py-2 px-3 rounded-lg transition';
-    btn.onclick = () => selectAnswer(btn, choice, q.correctIndex, q.choices[q.correctIndex]);
+    btn.onclick = () => selectAnswer(btn, choice, q.choices[q.correctIndex]);
     choicesDiv.appendChild(btn);
   });
-  document.getElementById('nextBtn').disabled = true;
 }
 
-function selectAnswer(button, selected, correctIndex, correctAnswer) {
-  const buttons = document.querySelectorAll('#choices button');
-  buttons.forEach(btn => btn.disabled = true);
+function selectAnswer(button, selected, correctAnswer) {
   const feedback = document.getElementById('feedback');
 
+  // თუ უკვე უპასუხა სწორად, აღარაფერს ვცვლით
+  if (answeredCorrectly) return;
+
   if (selected === correctAnswer) {
+    button.classList.remove('bg-gray-100', 'bg-red-200');
     button.classList.add('bg-green-200');
     feedback.textContent = "სწორია ✅";
     feedback.className = "text-green-600 text-lg font-semibold mt-4";
+    answeredCorrectly = true;
     score++;
   } else {
+    button.classList.remove('bg-gray-100', 'bg-green-200');
     button.classList.add('bg-red-200');
-    feedback.textContent = "არასწორია ❌";
+    feedback.textContent = "არასწორია ❌ სცადე თავიდან";
     feedback.className = "text-red-600 text-lg font-semibold mt-4";
-    // აჩვენოს სწორი პასუხიც
-    buttons.forEach(btn => {
-      if (btn.textContent === correctAnswer) {
-        btn.classList.add('bg-green-200');
-      }
-    });
   }
-
-  document.getElementById('nextBtn').disabled = false;
 }
 
 function nextQuestion() {
